@@ -3,59 +3,44 @@ import pandas as pd
 import os
 import time
 
-# --- KONFIGURASI HALAMAN ---
+# --- FUNGSI SMART LOAD (Anti-Gagal di Cloud & Lokal) ---
+def load_data_aman(nama_file):
+    # Daftar kemungkinan lokasi file
+    kemungkinan_lokasi = [
+        nama_file,                                      # Lokasi 1: Folder Utama (Root)
+        os.path.join("..", nama_file),                 # Lokasi 2: Naik satu tingkat
+        os.path.join(os.path.dirname(__file__), "..", nama_file) # Lokasi 3: Alamat Absolut
+    ]
+    
+    for lokasi in kemungkinan_lokasi:
+        if os.path.exists(lokasi):
+            return pd.read_csv(lokasi)
+    return None
+
+# --- MULAI TAMPILAN DASHBOARD ---
 st.set_page_config(page_title="Symbiotic Master Intel", layout="wide")
-
-# -------------------------------------------------------
-# 📂 LOGIKA SMART PATH (TARUH DI SINI)
-# -------------------------------------------------------
-if os.path.exists("laporan_whale_continuous.csv"):
-    path_whale = "laporan_whale_continuous.csv"
-else:
-    path_whale = os.path.join("..", "laporan_whale_continuous.csv")
-
-if os.path.exists("hasil_prediksi_ai.csv"):
-    path_ai = "hasil_prediksi_ai.csv"
-else:
-    path_ai = os.path.join("..", "hasil_prediksi_ai.csv")
-# -------------------------------------------------------
-
 st.title("🐋 Symbiotic Master Intelligence")
-st.markdown("---")
 
-# --- BAGIAN 1: RADAR PAUS ---
+# Ambil Data
+df_whale = load_data_aman("laporan_whale_continuous.csv")
+df_ai = load_data_aman("hasil_prediksi_ai.csv")
+
+# Tampilkan Radar Paus
 st.header("🔍 Real-Time Whale Tracker")
-
-if os.path.exists(path_whale):
-    df_whale = pd.read_csv(path_whale)
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        st.metric("Total Transaksi Paus", len(df_whale))
-        st.metric("Total ETH Berpindah", f"{df_whale['Jumlah_ETH'].sum():,.2f}")
-    
-    with col2:
-        st.write("### Transaksi Terakhir")
-        st.dataframe(df_whale.tail(5), use_container_width=True)
+if df_whale is not None:
+    st.dataframe(df_whale.tail(10), use_container_width=True)
 else:
-    st.info(f"Menunggu data dari Radar Paus... (Mencari di: {path_whale})")
+    st.info("Sedang mencari file 'laporan_whale_continuous.csv' di server...")
 
 st.markdown("---")
 
-# --- BAGIAN 2: AI PREDICTION ---
-st.header("🧠 AI Market Analysis (Multi-Asset)")
-
-if os.path.exists(path_ai):
-    df_ai = pd.read_csv(path_ai)
-    df_latest = df_ai.drop_duplicates(subset=['Koin'], keep='last')
-    st.table(df_latest)
+# Tampilkan AI Analysis
+st.header("🧠 AI Market Analysis")
+if df_ai is not None:
+    st.table(df_ai.drop_duplicates(subset=['Koin'], keep='last'))
 else:
-    st.warning(f"Jalankan AI Scanner untuk memunculkan data. (Mencari di: {path_ai})")
+    st.warning("Sedang mencari file 'hasil_prediksi_ai.csv' di server...")
 
-# Tombol Refresh & Auto Refresh
-st.sidebar.header("Konfigurasi")
-if st.sidebar.button('Refresh Data'):
-    st.rerun()
-
+# Auto Refresh
 time.sleep(10)
 st.rerun()
