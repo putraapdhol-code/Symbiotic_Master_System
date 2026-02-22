@@ -3,14 +3,28 @@ import pandas as pd
 import os
 import time
 
+# --- KONFIGURASI HALAMAN ---
 st.set_page_config(page_title="Symbiotic Master Intel", layout="wide")
+
+# -------------------------------------------------------
+# 📂 LOGIKA SMART PATH (TARUH DI SINI)
+# -------------------------------------------------------
+if os.path.exists("laporan_whale_continuous.csv"):
+    path_whale = "laporan_whale_continuous.csv"
+else:
+    path_whale = os.path.join("..", "laporan_whale_continuous.csv")
+
+if os.path.exists("hasil_prediksi_ai.csv"):
+    path_ai = "hasil_prediksi_ai.csv"
+else:
+    path_ai = os.path.join("..", "hasil_prediksi_ai.csv")
+# -------------------------------------------------------
 
 st.title("🐋 Symbiotic Master Intelligence")
 st.markdown("---")
 
-# --- BAGIAN 1: RADAR PAUS (INFRASTRUCTURE) ---
+# --- BAGIAN 1: RADAR PAUS ---
 st.header("🔍 Real-Time Whale Tracker")
-path_whale = os.path.join("..", "laporan_whale_continuous.csv")
 
 if os.path.exists(path_whale):
     df_whale = pd.read_csv(path_whale)
@@ -24,38 +38,24 @@ if os.path.exists(path_whale):
         st.write("### Transaksi Terakhir")
         st.dataframe(df_whale.tail(5), use_container_width=True)
 else:
-    st.info("Menunggu data dari Radar Paus (Folder 3)...")
+    st.info(f"Menunggu data dari Radar Paus... (Mencari di: {path_whale})")
 
 st.markdown("---")
 
-# --- BAGIAN 2: AI PREDICTION (AI MODELS) ---
+# --- BAGIAN 2: AI PREDICTION ---
 st.header("🧠 AI Market Analysis (Multi-Asset)")
-path_ai = os.path.join("..", "hasil_prediksi_ai.csv")
 
 if os.path.exists(path_ai):
     df_ai = pd.read_csv(path_ai)
-    # Ambil data terbaru untuk setiap koin agar tidak double
     df_latest = df_ai.drop_duplicates(subset=['Koin'], keep='last')
-    
-    st.table(df_latest) # Pakai table biar terlihat rapi dan formal
+    st.table(df_latest)
 else:
-    st.warning("Jalankan AI Scanner (Folder 2) untuk memunculkan data di sini.")
+    st.warning(f"Jalankan AI Scanner untuk memunculkan data. (Mencari di: {path_ai})")
 
-# Auto Refresh tiap 10 detik
-time.sleep(10)
-st.rerun()
-# --- BAGIAN PALING BAWAH DASHBOARD ---
-
-# Tambahkan Sidebar untuk Kontrol
-st.sidebar.header("Konfigurasi Sistem")
-refresh_rate = st.sidebar.slider("Kecepatan Update (Detik)", 5, 60, 10)
-
-st.sidebar.write(f"Terakhir Diperbarui: {time.strftime('%H:%M:%S')}")
-
-# Tombol Manual Refresh
-if st.sidebar.button('Refresh Data Sekarang'):
+# Tombol Refresh & Auto Refresh
+st.sidebar.header("Konfigurasi")
+if st.sidebar.button('Refresh Data'):
     st.rerun()
 
-# Auto Refresh Logika
-time.sleep(refresh_rate)
+time.sleep(10)
 st.rerun()
